@@ -1,0 +1,245 @@
+stages:
+  - secure
+  - code_quality
+  - build_container
+  - container_scanning
+  - deploy_development
+  - deploy_staging
+  - deploy_production
+  - dast_security
+  - release
+  - version
+
+code_intelligence_go:
+  stage: secure
+  needs: []
+  allow_failure: true
+  tags:
+    - gcp
+  rules:
+    - if: $CI_COMMIT_TAG
+      exists:
+        - '**/*.go'
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - '**/*.go'
+    - if: $CI_OPEN_MERGE_REQUESTS
+      exists:
+        - '**/*.go'
+
+dependency_scanning:
+  stage: secure
+  tags:
+    - gcp
+  rules:
+    - when: never
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_OPEN_MERGE_REQUESTS
+  
+code_quality:
+  stage: code_quality
+  image: docker:latest
+  tags:
+    - ubuntu
+  artifacts:
+    paths: [gl-code-quality-report.json]
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_OPEN_MERGE_REQUESTS
+
+license_scanning:
+  stage: secure
+  tags:
+    - gcp
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_OPEN_MERGE_REQUESTS
+
+sast:
+  stage: secure
+  tags: 
+    - gcp
+  rules:
+    - when: never
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_OPEN_MERGE_REQUESTS
+
+secret_detection:
+  stage: secure
+  tags: 
+    - gcp
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_OPEN_MERGE_REQUESTS
+
+build container image:
+  stage: build_container
+  tags:
+    - gcp
+  image:
+    name: docker:stable
+  services:
+    - name: docker:dind
+      entrypoint: ["dockerd-entrypoint.sh", "--tls=false"]
+  variables:
+    FULL_IMAGE_NAME: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_DEV/$GCP_PROJECT_NAME_DEV:$CI_COMMIT_REF_NAME"
+  script:
+    - cp $GCP_SERVICE_KEY gcloud-service-key.json
+    - touch .env
+    - cat gcloud-service-key.json | docker login -u _json_key --password-stdin https://asia-southeast2-docker.pkg.dev
+    - docker build -t $FULL_IMAGE_NAME .
+    - docker push $FULL_IMAGE_NAME
+  rules:
+    - if: '$CI_MERGE_REQUEST_ID'
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "development"
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      variables: 
+        FULL_IMAGE_NAME: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_STG/$GCP_PROJECT_NAME_STG:$CI_COMMIT_REF_NAME"
+    - if: $CI_COMMIT_TAG
+      variables: 
+        FULL_IMAGE_NAME: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_PROD/$GCP_PROJECT_NAME_PROD:$CI_COMMIT_TAG"
+
+container_scanning:
+  stage: container_scanning
+  tags:
+    - gcp
+  variables:
+    CS_REGISTRY_USER: _json_key_base64
+    CS_REGISTRY_PASSWORD: "$GCP_CREDENTIALS"
+  rules:
+    - if: "$CI_MERGE_REQUEST_ID"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "development"
+      variables:
+        CS_IMAGE: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_DEV/$GCP_PROJECT_NAME_DEV:$CI_COMMIT_REF_NAME"
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      variables:
+        CS_IMAGE: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_STG/$GCP_PROJECT_NAME_STG:$CI_COMMIT_REF_NAME"
+    - if: $CI_COMMIT_TAG
+      variables:
+        CS_IMAGE: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_PROD/$GCP_PROJECT_NAME_PROD:$CI_COMMIT_TAG"
+
+.deploy_container:
+  tags:
+    - gcp
+  image: google/cloud-sdk
+  services:
+    - docker:dind
+  variables:
+    PORT: "$APP_PORT"
+  script:
+    - cp $GCP_SERVICE_KEY gcloud-service-key.json # Google Cloud service accounts
+    - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+    - gcloud config set project $PROJECT
+    - gcloud run deploy $PROJECT_NAME --region asia-southeast2 --project $PROJECT --allow-unauthenticated --platform managed --port $PORT --service-account $ACCOUNT --image $FULL_IMAGE_NAME --ingress internal-and-cloud-load-balancing --no-cpu-throttling
+
+.deploy_prod:
+  tags:
+    - gcp
+  image: google/cloud-sdk
+  services:
+    - docker:dind
+  variables:
+    PORT: "$APP_PORT"
+  script:
+    - cp $GCP_SERVICE_KEY gcloud-service-key.json # Google Cloud service accounts
+    - gcloud auth activate-service-account --key-file=gcloud-service-key.json
+    - gcloud config set project $PROJECT
+    - gcloud run deploy $PROJECT_NAME --region asia-southeast2 --project $PROJECT --allow-unauthenticated --platform managed --port $PORT --service-account $ACCOUNT --image $FULL_IMAGE_NAME --ingress internal-and-cloud-load-balancing --no-cpu-throttling --labels rollout-strategy=gradual
+
+deploy development:
+  extends: .deploy_container
+  stage: deploy_development
+  only:
+    - development
+  environment: "development"
+  variables:
+    PROJECT: "$GCP_PROJECT_ID_DEV"
+    ACCOUNT: "$S_ACCOUNT_DEV"
+    PROJECT_NAME: "$GCP_PROJECT_NAME_DEV"
+    FULL_IMAGE_NAME: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_DEV/$GCP_PROJECT_NAME_DEV:$CI_COMMIT_REF_NAME"
+
+deploy staging:
+  extends: .deploy_container
+  stage: deploy_staging
+  only:
+    - staging
+  environment: "staging"
+  variables:
+    PROJECT: "$GCP_PROJECT_ID_STG"
+    ACCOUNT: "$S_ACCOUNT_STG"
+    PROJECT_NAME: "$GCP_PROJECT_NAME_STG"
+    FULL_IMAGE_NAME: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_STG/$GCP_PROJECT_NAME_STG:$CI_COMMIT_REF_NAME"
+
+deploy production:
+  extends: .deploy_prod
+  stage: deploy_production
+  rules:
+    - if: $CI_COMMIT_TAG
+  environment: "production"
+  variables:
+    PROJECT: "$GCP_PROJECT_ID_PROD"
+    ACCOUNT: "$S_ACCOUNT_PROD"
+    PROJECT_NAME: "$GCP_PROJECT_NAME_PROD"
+    FULL_IMAGE_NAME: "asia-southeast2-docker.pkg.dev/dto-artifact-registry/$ARTIFACT_PROD/$GCP_PROJECT_NAME_PROD:$CI_COMMIT_TAG"
+
+dast:
+  stage: dast_security
+  tags:
+    - gcp
+  rules:
+    - if: "$CI_MERGE_REQUEST_ID"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == "development"
+      variables:
+        DAST_WEBSITE: "$DAST_WEBSITE_DEV"
+    - if: $CI_COMMIT_REF_NAME == "staging"
+      variables:
+        DAST_WEBSITE: "$DAST_WEBSITE_STG"
+    - if: $CI_COMMIT_TAG
+      variables:
+        DAST_WEBSITE: "$DAST_WEBSITE_PROD"
+
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  tags:
+    - gcp
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Running the release job."
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: "Release $CI_COMMIT_TAG"
+    description: $CI_PROJECT_NAME
+
+build version:
+  stage: version
+  tags:
+    - gcp
+  image: bitnami/git:latest
+  script:
+    - git config --global user.email "${EMAIL}"
+    - git remote set-url origin https://${CI_USER}:${TOKEN}@gitlab.com/${CI_PROJECT_PATH}
+    - echo $VERSION_SHELL | base64 -d > version.sh
+    - chmod +x version.sh
+    - ./version.sh
+  only:
+    - master
+
+include:
+  - template: Jobs/Code-Quality.gitlab-ci.yml
+  - template: Jobs/Code-Intelligence.gitlab-ci.yml
+  - template: Security/DAST.gitlab-ci.yml
+  - template: Security/Container-Scanning.gitlab-ci.yml
+  - template: Security/Dependency-Scanning.gitlab-ci.yml
+  - template: Security/License-Scanning.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
