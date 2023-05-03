@@ -17,7 +17,8 @@
 | ----------- | ----------- |
 | Unix      | ```conda env create -n dicom-router -f conda-unix.yml```       |
 | Windows   | ```conda env create -n dicom-router -f conda-win.yml```       |
-| MacOS   | ```conda env create -n dicom-router -f conda-macos.yml```       |
+| MacOS M1  | ```conda env create -n dicom-router -f conda-macos-m1.yml```       |
+| MacOS Intel  | ```conda env create -n dicom-router -f conda-macos-x-64.yml```       |
 
 
 # How to run :
