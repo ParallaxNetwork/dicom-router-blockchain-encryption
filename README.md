@@ -7,9 +7,10 @@
 2. Ensure that the port 11112 is opened (default DICOM port)
 
 # Setup :
-1. Setup your target endpoint in ```router.conf``` in ```url```. Default is dev environment : ```api-satusehat-dev.dto.kemkes.go.id```
-2. Insert your SATUSEHAT Organization ID, Client Key, and Secret Key on ```router.conf```. <br> If you don't have access, please access [SATUSEHAT Developer Portal](https://satusehat.kemkes.go.id/sign-up)
-3. Run in terminal ```conda env create -n dicom-router -f conda.yml```
+1. Copy ```router.conf.template``` to ```router.conf```
+2. Setup your target endpoint in ```router.conf``` in ```url```. Default is dev environment : ```api-satusehat-dev.dto.kemkes.go.id```
+3. Insert your SATUSEHAT Organization ID, Client Key, and Secret Key on ```router.conf```. <br> If you don't have access, please access [SATUSEHAT Developer Portal](https://satusehat.kemkes.go.id/sign-up)
+4. Run in terminal ```conda env create -n dicom-router -f conda.yml```
 
 # How to run :
 1. Activate conda environment : ```conda activate dicom-router```
