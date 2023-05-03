@@ -51,7 +51,7 @@ def get_service_request(accessionNumber):
   conn.request("GET", path, payload, headers)
   res = conn.getresponse()
   data = json.loads(res.read().decode("utf-8"))
-  if(data["resourceType"]=="Bundle" and data["total"]==1):
+  if(data["resourceType"]=="Bundle" and data["total"]>=1):
     _,patientID = data["entry"][0]["resource"]["subject"]["reference"].split("/")
     return data["entry"][0]["resource"]["id"],patientID
   raise Exception("ServiceRequest not found")
@@ -68,7 +68,7 @@ def get_imaging_study(accessionNumber):
   conn.request("GET", path, payload, headers)
   res = conn.getresponse()
   data = json.loads(res.read().decode("utf-8"))
-  if(data["resourceType"]=="Bundle" and data["total"]==1):
+  if(data["resourceType"]=="Bundle" and data["total"]>=1):
     _,patientID = data["entry"][0]["resource"]["subject"]["reference"].split("/")
     return data["entry"][0]["resource"]["id"]
   return None
