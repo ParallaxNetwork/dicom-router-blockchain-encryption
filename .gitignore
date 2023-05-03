@@ -3,3 +3,4 @@ in
 utils/__pycache__
 utils/__init__.py
 *.dcm
+install_modules
