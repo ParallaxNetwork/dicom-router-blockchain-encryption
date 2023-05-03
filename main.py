@@ -21,7 +21,7 @@ dicom_pathsuffix = config.get('satusehat', 'dicom_pathsuffix')
 fhir_pathsuffix = config.get('satusehat', 'fhir_pathsuffix')
 self_ae_title = config.get('satusehat', 'ae_title')
 
-token = ""
+token = str()
 
 dicom_port = 11112
 dcmDir = "/in/"
