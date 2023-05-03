@@ -1,7 +1,7 @@
 [satusehat]
-organization_id = 
-client_key = 
-secret_key = 
+organization_id =
+client_key =
+secrent_key =
 url = api-satusehat-dev.dto.kemkes.go.id
 dicom_pathsuffix = /dicom/v1/dicomWeb/studies
 fhir_pathsuffix = /fhir-r4/v1
