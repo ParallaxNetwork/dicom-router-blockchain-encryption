@@ -20,11 +20,10 @@ organization_id = config.get('satusehat', 'organization_id')
 dicom_pathsuffix = config.get('satusehat', 'dicom_pathsuffix')
 fhir_pathsuffix = config.get('satusehat', 'fhir_pathsuffix')
 self_ae_title = config.get('satusehat', 'ae_title')
+dicom_port = config.get('satusehat', 'dicom_port')
+dcm_dir = config.get('satusehat', 'dcm_dir')
 
 token = str()
-
-dicom_port = 11112
-dcmDir = "/in/"
 
 debug_logger()
 LOGGER = logging.getLogger('pynetdicom')
@@ -110,7 +109,7 @@ def dicom_push(assocId,study_iuid):
   for n in range(len(instances)):
     series_iuid = instances[n][0]
     instance_uid = instances[n][1]
-    filename = os.getcwd()+dcmDir+subdir+"/"+study_iuid+"/"+series_iuid+"/"+instance_uid+".dcm"
+    filename = os.getcwd()+dcm_dir+subdir+"/"+study_iuid+"/"+series_iuid+"/"+instance_uid+".dcm"
     try:
       payload = open(filename,'rb')
       str = ""
@@ -125,7 +124,7 @@ def dicom_push(assocId,study_iuid):
       print("[Error] - Sending Instance UID failed: "+instance_uid)
       raise Exception("Sending DICOM failed")
 
-    # output = os.getcwd()+dcmDir+subdir+ "dicom-push.json"
+    # output = os.getcwd()+dcm_dir+subdir+ "dicom-push.json"
     # with open(output, 'w') as out:
     #   out.write(str)
 
@@ -133,10 +132,10 @@ def dicom_push(assocId,study_iuid):
       print("[Warn] - Image already exists")
 
       # Remove Instance UID
-      os.remove(os.getcwd()+dcmDir+subdir+"/"+study_iuid+"/"+series_iuid+"/"+instance_uid+".dcm")
+      os.remove(os.getcwd()+dcm_dir+subdir+"/"+study_iuid+"/"+series_iuid+"/"+instance_uid+".dcm")
 
       # Remove Series UID Folder if Empty
-      os.rmdir(os.getcwd()+dcmDir+subdir+"/"+study_iuid+"/"+series_iuid)
+      os.rmdir(os.getcwd()+dcm_dir+subdir+"/"+study_iuid+"/"+series_iuid)
 
   
   return True
@@ -161,11 +160,11 @@ def handle_store(event):
   subdir = subdir + "/" + ds.StudyInstanceUID + "/" + ds.SeriesInstanceUID + "/"
 
   try:
-    os.makedirs(os.getcwd()+dcmDir+subdir, exist_ok=True)
+    os.makedirs(os.getcwd()+dcm_dir+subdir, exist_ok=True)
     print("[Info] - Directory created")
   except:
     print("[Info] - Directory already created")
-  filename = os.getcwd()+dcmDir+subdir+ds.SOPInstanceUID+".dcm"
+  filename = os.getcwd()+dcm_dir+subdir+ds.SOPInstanceUID+".dcm"
   ds.save_as(filename, write_like_original=False)
 
   # insert into db
@@ -203,7 +202,7 @@ def handle_assoc_released(event):
       print("[Info] - Study IUID: "+study_iuid)
       imagingStudyID = get_imaging_study(accession_no)
       subdir = make_hash(assocId)
-      study_dir = os.getcwd()+dcmDir+subdir+"/"+study_iuid
+      study_dir = os.getcwd()+dcm_dir+subdir+"/"+study_iuid
       serviceRequestID = None
       patientID = None
       try:
@@ -264,7 +263,7 @@ def handle_assoc_released(event):
     #   print("[Info] - Deleting association folder")
     #   try:
     #     subdir = make_hash(assocId)
-    #     shutil.rmtree(os.getcwd()+dcmDir+subdir)
+    #     shutil.rmtree(os.getcwd()+dcm_dir+subdir)
     #   except BaseException as e :
     #     print(e)
 
@@ -306,11 +305,11 @@ ae.require_called_aet = self_ae_title
 # Purge and re-create the incoming folder
 print("[Init] - Clearing incoming folder")
 try:
-  shutil.rmtree(os.getcwd()+dcmDir)
+  shutil.rmtree(os.getcwd()+dcm_dir)
 except BaseException as err :
   print(err) 
-os.mkdir(os.getcwd()+dcmDir)
+os.mkdir(os.getcwd()+dcm_dir)
 
 # Start listening for incoming association requests
-print("[Init] - Spawning DICOM interface on port "+str(dicom_port)+" with AE title: "+self_ae_title+".")
-ae.start_server(("0.0.0.0", dicom_port), evt_handlers=handlers)
+print("[Init] - Spawning DICOM interface on port "+dicom_port+" with AE title: "+self_ae_title+".")
+ae.start_server(("0.0.0.0", int(dicom_port)), evt_handlers=handlers)
