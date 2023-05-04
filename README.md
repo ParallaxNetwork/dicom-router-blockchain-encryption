@@ -9,7 +9,7 @@ Welcome to the DICOM Router repository created by the Digital Transformation Off
 ## Get Started
 ### Tested on : 
 - Unix based operating System (Ubuntu server) --> use conda-unix.yml
-- MacOS (arm64, Intel) --> use conda-macos-m1.yml / conda-macos-x-64.yml
+- MacOS (arm64, Intel) --> use conda-macos-m1.yml / conda-macos-x64.yml
 - Windows (Intel) --> use conda-win.yml
 
 ### Pre-requisite : 
@@ -36,7 +36,7 @@ Welcome to the DICOM Router repository created by the Digital Transformation Off
 | Unix      | ```conda env create -n dicom-router -f conda_env/conda-unix.yml```       |
 | Windows   | ```conda env create -n dicom-router -f conda_env/conda-win.yml```       |
 | MacOS M1  | ```conda env create -n dicom-router -f conda_env/conda-macos-m1.yml```       |
-| MacOS Intel  | ```conda env create -n dicom-router -f conda_env/conda-macos-x-64.yml```       |
+| MacOS Intel  | ```conda env create -n dicom-router -f conda_env/conda-macos-x64.yml```       |
 
 
 ### How to run :
