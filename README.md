@@ -3,7 +3,7 @@
 
 Welcome to the DICOM Router repository created by the Digital Transformation Office of the Ministry of Health Indonesia. This software solution provides a reliable and efficient way to send medical images and data through the Digital Imaging and Communications in Medicine (DICOM) standard to SATUSEHAT Platform. The DICOM Router allows for seamless transmission of DICOM images between different healthcare institutions, reducing the risk of data loss and ensuring patient information is securely shared using SATUSEHAT OAuth2 authentication service.
 
-## Table of Contents
+## Architecture Overview
 ![DICOM Router Diagram](assets/DICOM Router Diagram.png)
 
 ## Get Started
