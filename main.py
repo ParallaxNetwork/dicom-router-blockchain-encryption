@@ -147,10 +147,10 @@ def handle_store(event):
   print("[Info-Assoc] - handle_store")
   
   ds = event.dataset
+  ds = ds[0x00030000:]
 
   # Add the File Meta Information
   ds.file_meta = event.file_meta
-
 
   # print("[Info-Assoc] - StudyInstanceUID      : " + ds.StudyInstanceUID)
   # print("[Info-Assoc] - SeriesInstanceUID     : " + ds.SeriesInstanceUID)
