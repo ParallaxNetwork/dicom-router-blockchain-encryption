@@ -51,9 +51,9 @@ Welcome to the DICOM Router repository created by the Digital Transformation Off
 
 | File format    | Single | Recursive |
 | ----------- | ----------- | ----------- |
-| .dcm      | ```storescu --call DCMROUTER localhost 11112 file.dcm``` | ```storescu --call DCMROUTER localhost 11112-- scan-directories --recurse STUDY_MR```      |
-| JPEG lossless format   | ```storescu --call DCMROUTER -xs localhost 11112 file.dcm```       | ```storescu --call DCMROUTER -xs localhost 11112-- scan-directories --recurse STUDY_MR``` |
-| JPEG 2000 lossless format  | ```storescu --call DCMROUTER -xv localhost 11112 file.dcm```       | ```storescu --call DCMROUTER -xv localhost 11112-- scan-directories --recurse STUDY_MR``` |
+| .dcm      | ```storescu --call DCMROUTER localhost 11112 file.dcm``` | ```storescu --call DCMROUTER localhost 11112 --scan-directories --recurse STUDY_MR```      |
+| JPEG lossless format   | ```storescu --call DCMROUTER -xs localhost 11112 file.dcm```       | ```storescu --call DCMROUTER -xs localhost 11112 --scan-directories --recurse STUDY_MR``` |
+| JPEG 2000 lossless format  | ```storescu --call DCMROUTER -xv localhost 11112 file.dcm```       | ```storescu --call DCMROUTER -xv localhost 11112 --scan-directories --recurse STUDY_MR``` |
 
 ### Changelog :
 See [CHANGELOG](CHANGELOG)
