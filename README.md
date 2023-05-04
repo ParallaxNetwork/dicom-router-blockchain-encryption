@@ -9,11 +9,20 @@
 
 # Setup :
 1. Copy ```router.conf.template``` to ```router.conf```
-2. Setup your target endpoint in ```router.conf``` in ```url```. Default is dev environment : ```api-satusehat-dev.dto.kemkes.go.id```
+2. Setup your target endpoint in ```router.conf``` in ```url```. Default in template file is dev environment : ```api-satusehat-dev.dto.kemkes.go.id```
 3. Insert your SATUSEHAT Organization ID, Client Key, and Secret Key on ```router.conf```. <br> If you don't have access, please access [SATUSEHAT Developer Portal](https://satusehat.kemkes.go.id/sign-up)
 4. Run conda env creation in terminal based on .yml environment file provided
 
-| Server OS    | Script |
+
+| Environment    | URL |
+| ----------- | ----------- |
+| Development      | ```api-satusehat-dev.dto.kemkes.go.id```       |
+| Staging   | ```api-satusehat-stg.dto.kemkes.go.id```       |
+| Production  | ```api-satusehat.kemkes.go.id```       |
+
+
+
+| Server OS    | Conda Script Used |
 | ----------- | ----------- |
 | Unix      | ```conda env create -n dicom-router -f conda_env/conda-unix.yml```       |
 | Windows   | ```conda env create -n dicom-router -f conda_env/conda-win.yml```       |
