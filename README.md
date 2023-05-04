@@ -1,19 +1,23 @@
-# Tested on : 
+# DICOM Router
+
+![DICOM Router Diagram](assets/DICOM Router Diagram.png)
+
+## Tested on : 
 - Unix based operating System (Ubuntu server) --> use conda-unix.yml
 - MacOS (arm64, Intel) --> use conda-macos.yml
 - Windows (Intel) --> use conda-win.yml
 
-# Pre-requisite : 
+## Pre-requisite : 
 1. Installed latest Anaconda version (Download [here](https://anaconda.com/products/distribution))
 2. Ensure that the port 11112 is opened (default DICOM port)
 
-# Setup :
+## Setup :
 1. Copy ```router.conf.template``` to ```router.conf```
 2. Setup your target endpoint in ```router.conf``` in ```url```. Default in template file is dev environment : ```api-satusehat-dev.dto.kemkes.go.id```
 3. Insert your SATUSEHAT Organization ID, Client Key, and Secret Key on ```router.conf```. <br> If you don't have access, please access [SATUSEHAT Developer Portal](https://satusehat.kemkes.go.id/sign-up)
 4. Run conda env creation in terminal based on .yml environment file provided
 
-
+## Environment :
 | Environment    | URL |
 | ----------- | ----------- |
 | Development      | ```api-satusehat-dev.dto.kemkes.go.id```       |
@@ -21,7 +25,7 @@
 | Production  | ```api-satusehat.kemkes.go.id```       |
 
 
-
+## Conda Installation Script : 
 | Server OS    | Conda Script Used |
 | ----------- | ----------- |
 | Unix      | ```conda env create -n dicom-router -f conda_env/conda-unix.yml```       |
@@ -30,12 +34,12 @@
 | MacOS Intel  | ```conda env create -n dicom-router -f conda_env/conda-macos-x-64.yml```       |
 
 
-# How to run :
+## How to run :
 1. Activate conda environment : ```conda activate dicom-router```
 2. Move to directory containing main.py : ```cd dicom-router```
 3. Run main microservices : ```python main.py -v```
 
-# Testing :
+## Testing :
 ### Prerequisite : 
 1. Download dcmtk from official site ```https://dicom.offis.de/dcmtk.php.en```
 
@@ -52,7 +56,5 @@
 - Single (singular file) : ```storescu --call DCMROUTER -xv localhost 11112 file.dcm```
 
 
-# Version Update:
-Last update : 
-- 19 January 2023 : Initial Commit with Python Virtual Environment
-- 20 January 2023 : Commit with conda.yml environment 
+## Changelog :
+See [CHANGELOG.md](CHANGELOG.md)
