@@ -31,8 +31,17 @@
 1. Download dcmtk from official site ```https://dicom.offis.de/dcmtk.php.en```
 
 ### Sending File
-- Recursive (multislice file) : ```dcmsend 127.0.0.1 11112 --call DCMROUTER --scan-directories --recurse STUDY_MR```
-- Single (singular file) : ```dcmsend 127.0.0.1 11112 --call DCMROUTER 03DBDF35.dcm```
+- Recursive (multislice file) : ```storescu --call DCMROUTER localhost 11112-- scan-directories --recurse STUDY_MR```
+- Single (singular file) : ```storescu --call DCMROUTER localhost 11112 file.dcm```
+
+### Sending File with JPEG lossless
+- Recursive (multislice file) : ```storescu --call DCMROUTER -xs localhost 11112-- scan-directories --recurse STUDY_MR```
+- Single (singular file) : ```storescu --call DCMROUTER -xs localhost 11112 file.dcm```
+
+### Sending File with JPEG 2000 lossless
+- Recursive (multislice file) : ```storescu --call DCMROUTER -xv localhost 11112-- scan-directories --recurse STUDY_MR```
+- Single (singular file) : ```storescu --call DCMROUTER -xv localhost 11112 file.dcm```
+
 
 # Version Update:
 Last update : 
