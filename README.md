@@ -9,12 +9,14 @@ Welcome to the DICOM Router repository created by the Digital Transformation Off
 ## Get Started
 ### Tested on : 
 - Unix based operating System (Ubuntu server) --> use conda-unix.yml
-- MacOS (arm64, Intel) --> use conda-macos.yml
+- MacOS (arm64, Intel) --> use conda-macos-m1.yml / conda-macos-x-64.yml
 - Windows (Intel) --> use conda-win.yml
 
 ### Pre-requisite : 
 1. Installed latest Anaconda version (Download [here](https://anaconda.com/products/distribution))
 2. Ensure that the port 11112 is opened (default DICOM port)
+3. Windows : enable LongPath ```HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem```
+--> ```LongPathsEnabled``` --> ```Value data``` = ```1``` 
 
 ### Setup :
 1. Copy ```router.conf.template``` to ```router.conf```
