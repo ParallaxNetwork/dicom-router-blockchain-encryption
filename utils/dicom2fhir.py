@@ -2,9 +2,10 @@ import os
 from fhir import resources as fr
 from pydicom import dcmread
 from pydicom import dataset
-
+from pydicom import config
 from . import fhirutils
 
+config.convert_wrong_length_to_UN = True
 
 def dcm_coded_concept(CodeSequence):
     concepts = []
@@ -172,7 +173,7 @@ def createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID) -> f
     # TODO: at this point we need a correct reference to the directory
     # study.endpoint = []
     # endpoint = fr.fhirreference.FHIRReference()
-    # endpoint.reference="file:///" +dcmDir
+    # endpoint.reference="file:///" +dcm_dir
     # study.endpoint.append(endpoint)
 
 
@@ -229,25 +230,32 @@ def createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID) -> f
     return study
 
 
-def process_dicom_2_fhir(dcmDir: str, imagingStudyID: str, serviceRequestID: str, patientID: str) -> fr.imagingstudy.ImagingStudy:
+def process_dicom_2_fhir(dcm_dir: str, imagingStudyID: str, serviceRequestID: str, patientID: str) -> fr.imagingstudy.ImagingStudy:
     dcmDict = {}
     files = []
-    for r, d, f in os.walk(dcmDir):
+    for r, d, f in os.walk(dcm_dir):
         for file in f:
             if '.dcm' in file:
                 files.append(os.path.join(r, file))
     studyInstanceUID = None
     imagingStudy = None
-    for fp in files:
-        with dcmread(fp, None, [0x7FE00010], force=True) as ds:
-            if studyInstanceUID is None:
-                studyInstanceUID = ds.StudyInstanceUID
-            if studyInstanceUID != ds.StudyInstanceUID:
-                raise Exception("Incorrect DICOM path, more than one study detected")
 
-            if imagingStudy is None:
-                imagingStudy = createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID)
-            else:
-                addSeries(imagingStudy, ds, fp)
+    try:
+      for fp in files:
+          # with dcmread(fp, None, [0x7FE00010], force=True) as ds:
+          with dcmread(fp, None, False, force=True) as ds:
+              print(ds)
+              if studyInstanceUID is None:
+                  studyInstanceUID = ds.StudyInstanceUID
+              if studyInstanceUID != ds.StudyInstanceUID:
+                  raise Exception("Incorrect DICOM path, more than one study detected")
+
+              if imagingStudy is None:
+                  imagingStudy = createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID)
+              else:
+                  addSeries(imagingStudy, ds, fp)
+    except Exception as err:
+        print(err)
+    print("[Info] - fp in files")
 
     return imagingStudy

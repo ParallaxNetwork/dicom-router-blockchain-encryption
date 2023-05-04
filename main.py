@@ -5,12 +5,12 @@ import json
 import logging
 import os
 import shutil
-from pynetdicom import AE, evt, AllStoragePresentationContexts, debug_logger
+from pynetdicom import AE, evt, AllStoragePresentationContexts, debug_logger, StoragePresentationContexts, DEFAULT_TRANSFER_SYNTAXES
 import http.client
 from utils import oauth2
 from utils.dicom2fhir import process_dicom_2_fhir
 from time import sleep
-
+from pydicom.uid import JPEGLosslessSV1, JPEG2000Lossless
 from utils.dbquery import dbquery
 
 config = configparser.ConfigParser()
@@ -144,10 +144,13 @@ def dicom_push(assocId,study_iuid):
 def handle_store(event):
   """Handle a C-STORE request event."""
   # Decode the C-STORE request's *Data Set* parameter to a pydicom Dataset
+  print("[Info-Assoc] - handle_store")
+  
   ds = event.dataset
 
   # Add the File Meta Information
   ds.file_meta = event.file_meta
+
 
   # print("[Info-Assoc] - StudyInstanceUID      : " + ds.StudyInstanceUID)
   # print("[Info-Assoc] - SeriesInstanceUID     : " + ds.SeriesInstanceUID)
@@ -195,6 +198,7 @@ def handle_assoc_released(event):
   try:
     dbq.Update(dbq.UPDATE_ASSOC_COMPLETED,[assocId])
     ids = dbq.Query(dbq.GET_IDS_PER_ASSOC,[assocId])
+    print(ids);
     for stdy in range(len(ids)):
       study_iuid = ids[stdy][0]
       accession_no = ids[stdy][1]
@@ -295,6 +299,11 @@ handlers = [
 
 # Initialise the Application Entity
 ae = AE(ae_title=self_ae_title)
+
+transfer_syntaxes = DEFAULT_TRANSFER_SYNTAXES + [JPEGLosslessSV1, JPEG2000Lossless]
+
+for context in StoragePresentationContexts:
+    ae.add_supported_context(context.abstract_syntax, transfer_syntaxes)
 
 # Support presentation contexts for all storage SOP Classes
 ae.supported_contexts = AllStoragePresentationContexts
