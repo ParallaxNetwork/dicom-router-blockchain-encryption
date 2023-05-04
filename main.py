@@ -13,6 +13,8 @@ from time import sleep
 from pydicom.uid import JPEGLosslessSV1, JPEG2000Lossless
 from utils.dbquery import dbquery
 
+from pynetdicom.sop_class import Verification
+
 config = configparser.ConfigParser()
 config.read('router.conf')
 url = config.get('satusehat', 'url')
@@ -305,8 +307,12 @@ transfer_syntaxes = DEFAULT_TRANSFER_SYNTAXES + [JPEGLosslessSV1, JPEG2000Lossle
 for context in StoragePresentationContexts:
     ae.add_supported_context(context.abstract_syntax, transfer_syntaxes)
 
+# Support verification SCP (echo)
+ae.add_supported_context(Verification)
+
 # Support presentation contexts for all storage SOP Classes
 ae.supported_contexts = AllStoragePresentationContexts
+
 
 # Set to require the *Called AE Title* must match the AE title
 ae.require_called_aet = self_ae_title
