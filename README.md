@@ -56,7 +56,7 @@ Welcome to the DICOM Router repository created by the Digital Transformation Off
 | JPEG 2000 lossless format  | ```storescu --call DCMROUTER -xv localhost 11112 file.dcm```       | ```storescu --call DCMROUTER -xv localhost 11112-- scan-directories --recurse STUDY_MR``` |
 
 ### Changelog :
-See [CHANGELOG.md](CHANGELOG.md)
+See [CHANGELOG](CHANGELOG)
 
 ### License :
 See [LICENSE](LICENSE)
