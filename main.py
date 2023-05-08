@@ -7,6 +7,7 @@ import os
 import shutil
 from pynetdicom import AE, evt, AllStoragePresentationContexts, debug_logger, StoragePresentationContexts, DEFAULT_TRANSFER_SYNTAXES
 import http.client
+import ssl
 from utils import oauth2
 from utils.dicom2fhir import process_dicom_2_fhir
 from time import sleep
@@ -98,7 +99,8 @@ def imagingstudy_post(filename, id):
 def dicom_push(assocId,study_iuid):
   print("[Info] - DICOM Push started")
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url)
+  context = ssl.SSLContext()
+  conn = http.client.HTTPSConnection(url, context=context)
 
   subdir = make_hash(assocId)
   headers = {
