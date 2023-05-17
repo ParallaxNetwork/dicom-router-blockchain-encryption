@@ -13,6 +13,7 @@ from utils.dicom2fhir import process_dicom_2_fhir
 from time import sleep
 from pydicom.uid import JPEGLosslessSV1, JPEG2000Lossless
 from utils.dbquery import dbquery
+from httplib import HTTPSConnection
 
 from pynetdicom.sop_class import Verification
 
@@ -31,6 +32,25 @@ token = str()
 debug_logger()
 LOGGER = logging.getLogger('pynetdicom')
 
+def create_custom_HTTPSConnection(host):
+
+    def verify_cert(cert, host):
+        # Write your code here
+        # You can certainly base yourself on ssl.match_hostname
+        # Raise ssl.CertificateError if verification fails
+        print 'Host:', host
+        print 'Peer cert:', cert
+
+    class CustomHTTPSConnection(HTTPSConnection, object):
+        def connect(self):
+            super(CustomHTTPSConnection, self).connect()
+            cert = self.sock.getpeercert()
+            verify_cert(cert, host)
+
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    return CustomHTTPSConnection(host=host, context=context)
+
 def make_association_id(event):
   return event.assoc.name+"#"+str(event.assoc.native_id)
 
@@ -43,7 +63,7 @@ def make_hash(study_id):
 
 def get_service_request(accessionNumber):
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url)
+  conn = create_custom_HTTPSConnection(url)
   payload = ''
   headers = {
     'Accept': 'application/json',
@@ -78,7 +98,7 @@ def get_imaging_study(accessionNumber):
 
 def imagingstudy_post(filename, id):
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url)
+  conn = create_custom_HTTPSConnection(url)
   payload = open(filename,'rb')
   headers = {
     'Authorization': 'Bearer ' + token,
@@ -100,7 +120,7 @@ def dicom_push(assocId,study_iuid):
   print("[Info] - DICOM Push started")
   token = oauth2.get_token()
   context = ssl._create_default_https_context()
-  conn = http.client.HTTPSConnection(url, context=context)
+  conn = create_custom_HTTPSConnection(url, context=context)
 
   subdir = make_hash(assocId)
   headers = {
