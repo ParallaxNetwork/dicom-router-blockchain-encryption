@@ -7,6 +7,7 @@ import os
 import shutil
 from pynetdicom import AE, evt, AllStoragePresentationContexts, debug_logger, StoragePresentationContexts, DEFAULT_TRANSFER_SYNTAXES
 import http.client
+import requests
 import ssl
 from utils import oauth2
 from utils.dicom2fhir import process_dicom_2_fhir
@@ -99,7 +100,7 @@ def imagingstudy_post(filename, id):
 def dicom_push(assocId,study_iuid):
   print("[Info] - DICOM Push started")
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url, context=ssl.create_default_context())
+  #conn = http.client.HTTPSConnection(url, context=ssl.create_default_context())
 
   subdir = make_hash(assocId)
   headers = {
@@ -116,9 +117,11 @@ def dicom_push(assocId,study_iuid):
     try:
       payload = open(filename,'rb')
       str = ""
-      conn.request("POST", dicom_pathsuffix, payload, headers)
-      res = conn.getresponse()
-      data = res.read()
+      #conn.request("POST", dicom_pathsuffix, payload, headers)
+      #res = conn.getresponse()
+      #data = res.read()
+      res = requests.post(url=url+dicom_pathsuffix, data=payload, headers=headers)
+      data = res.text
       str = data.decode("utf-8")
       print("[Info] - Sending Instance UID: "+instance_uid+" success")
       dbq.Update(dbq.UPDATE_INSTANCE_STATUS_SENT,[assocId,study_iuid,series_iuid,instance_uid])
