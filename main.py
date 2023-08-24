@@ -44,16 +44,13 @@ def make_hash(study_id):
 
 def get_service_request(accessionNumber):
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url)
-  payload = ''
   headers = {
     'Accept': 'application/json',
     'Authorization': 'Bearer ' + token
   }
   path = fhir_pathsuffix + "/ServiceRequest?identifier=http://sys-ids.kemkes.go.id/acsn/" + organization_id + "%7C" + accessionNumber + '&_sort=-_lastUpdated&_count=1'
-  conn.request("GET", path, payload, headers)
-  res = conn.getresponse()
-  data = json.loads(res.read().decode("utf-8"))
+  res = requests.get(url=url+path, headers=headers)
+  data = res.json()
   if(data["resourceType"]=="Bundle" and data["total"]>=1):
     _,patientID = data["entry"][0]["resource"]["subject"]["reference"].split("/")
     return data["entry"][0]["resource"]["id"],patientID
@@ -61,16 +58,13 @@ def get_service_request(accessionNumber):
 
 def get_imaging_study(accessionNumber):
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url)
-  payload = ''
   headers = {
     'Accept': 'application/json',
     'Authorization': 'Bearer ' + token
   }
   path = fhir_pathsuffix + "/ImagingStudy?identifier=http://sys-ids.kemkes.go.id/acsn/" + organization_id + "%7C" + accessionNumber + '&_sort=-_lastUpdated&_count=1'
-  conn.request("GET", path, payload, headers)
-  res = conn.getresponse()
-  data = json.loads(res.read().decode("utf-8"))
+  res = requests.get(url=url+path, headers=headers)
+  data = res.json()
   if(data["resourceType"]=="Bundle" and data["total"]>=1):
     _,patientID = data["entry"][0]["resource"]["subject"]["reference"].split("/")
     return data["entry"][0]["resource"]["id"]
@@ -79,18 +73,16 @@ def get_imaging_study(accessionNumber):
 
 def imagingstudy_post(filename, id):
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url)
   payload = open(filename,'rb')
   headers = {
     'Authorization': 'Bearer ' + token,
     'Content-Type': 'application/json'
   }
   if id==None:
-    conn.request("POST", fhir_pathsuffix+"/ImagingStudy", payload, headers)
+    res = requests.post(url=url+fhir_pathsuffix+"/ImagingStudy", data=payload, headers=headers)
   else:
-    conn.request("PUT", fhir_pathsuffix+"/ImagingStudy/"+id, payload, headers)
-  res = conn.getresponse()
-  data = json.loads(res.read().decode("utf-8"))
+    res = requests.put(url=url+fhir_pathsuffix+"/ImagingStudy/"+id, data=payload, headers=headers)
+  data = res.json()
   if(data["resourceType"]=="ImagingStudy"):
     return data["id"]
   return None
