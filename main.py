@@ -109,12 +109,8 @@ def dicom_push(assocId,study_iuid):
     try:
       payload = open(filename,'rb')
       str = ""
-      #conn.request("POST", dicom_pathsuffix, payload, headers)
-      #res = conn.getresponse()
-      #data = res.read()
       res = requests.post(url=url+dicom_pathsuffix, data=payload, headers=headers)
-      data = res.text
-      str = data.decode("utf-8")
+      str = res.text
       print("[Info] - Sending Instance UID: "+instance_uid+" success")
       dbq.Update(dbq.UPDATE_INSTANCE_STATUS_SENT,[assocId,study_iuid,series_iuid,instance_uid])
     except Exception as err:
