@@ -99,7 +99,7 @@ def imagingstudy_post(filename, id):
 def dicom_push(assocId,study_iuid):
   print("[Info] - DICOM Push started")
   token = oauth2.get_token()
-  conn = http.client.HTTPSConnection(url, context=ssl._create_unverified_context())
+  conn = http.client.HTTPSConnection(url, context=ssl.create_default_context())
 
   subdir = make_hash(assocId)
   headers = {
