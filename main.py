@@ -43,7 +43,8 @@ def make_hash(study_id):
   return h
 
 def get_service_request(accessionNumber):
-  token = oauth2.get_token()
+  # token = oauth2.get_token()
+  global token
   headers = {
     'Accept': 'application/json',
     'Authorization': 'Bearer ' + token
@@ -57,7 +58,8 @@ def get_service_request(accessionNumber):
   raise Exception("ServiceRequest not found")
 
 def get_imaging_study(accessionNumber):
-  token = oauth2.get_token()
+  # token = oauth2.get_token()
+  global token
   headers = {
     'Accept': 'application/json',
     'Authorization': 'Bearer ' + token
@@ -72,12 +74,13 @@ def get_imaging_study(accessionNumber):
 
 
 def imagingstudy_post(filename, id):
-  token = oauth2.get_token()
-  payload = open(filename,'rb')
+  # token = oauth2.get_token()
+  global token
   headers = {
     'Authorization': 'Bearer ' + token,
     'Content-Type': 'application/json'
   }
+  payload = open(filename,'rb')
   if id==None:
     res = requests.post(url=url+fhir_pathsuffix+"/ImagingStudy", data=payload, headers=headers)
   else:
@@ -85,20 +88,20 @@ def imagingstudy_post(filename, id):
   data = res.json()
   if(data["resourceType"]=="ImagingStudy"):
     return data["id"]
-  return None
+  raise Exception("POST ImagingStudy failed")
 
 
-
-def dicom_push(assocId,study_iuid):
+def dicom_push(assocId,study_iuid, imagingStudyID):
   print("[Info] - DICOM Push started")
-  token = oauth2.get_token()
-  #conn = http.client.HTTPSConnection(url, context=ssl.create_default_context())
-
+  # token = oauth2.get_token()
+  global token
   subdir = make_hash(assocId)
+  print("dicom_push imagingStudyID: "+imagingStudyID)
   headers = {
     'Content-Type': 'application/dicom',
     'Accept': 'application/dicom+json',
-    'Authorization': 'Bearer ' + token
+    'Authorization': 'Bearer ' + token,
+    'X-ImagingStudy-ID': imagingStudyID
   }
 
   instances = dbq.Query(dbq.GET_INSTANCES_PER_STUDY,[assocId,study_iuid])
@@ -111,10 +114,10 @@ def dicom_push(assocId,study_iuid):
       str = ""
       res = requests.post(url=url+dicom_pathsuffix, data=payload, headers=headers)
       str = res.text
-      print("[Info] - Sending Instance UID: "+instance_uid+" success")
+      print("[Info] - Sending Instance UID: "+series_iuid+"/"+instance_uid+" success")
       dbq.Update(dbq.UPDATE_INSTANCE_STATUS_SENT,[assocId,study_iuid,series_iuid,instance_uid])
-    except Exception as err:
-      print(err)
+    except Exception as e:
+      print(e)
       print("[Error] - Sending Instance UID failed: "+instance_uid)
       raise Exception("Sending DICOM failed")
 
@@ -188,6 +191,8 @@ def handle_store(event):
 def handle_assoc_released(event):
   """Handle an ASSOCIATION RELEASE event."""
   print("[Info] - Processing DICOM start")
+  global token
+  token = oauth2.get_token()
   assocId = make_association_id(event)
   try:
     dbq.Update(dbq.UPDATE_ASSOC_COMPLETED,[assocId])
@@ -221,7 +226,8 @@ def handle_assoc_released(event):
             out.write(imagingStudy.json(indent=2))
           imagingStudyCreated = True
           print("[Info] - ImagingStudy "+study_iuid+" created")
-        except:
+        except Exception as e:
+          print(e)
           print("[Error] - Failed to create ImagingStudy for " + study_iuid)
       
       # POST ImagingStudy
@@ -232,20 +238,24 @@ def handle_assoc_released(event):
           if imagingStudyID==None:
             print("[Info] - POST-ing ImagingStudy")
             id = imagingstudy_post(imaging_study_json, None)
+            print(id)
             print("[Info] - ImagingStudy POST-ed, id: "+id)
           else:
             id = imagingstudy_post(imaging_study_json, imagingStudyID)
+            print(id)
             print("[Info] - ImagingStudy already POST-ed, using PUT instead, id: "+id)
           imagingStudyPosted = True
-        except:
+        except Exception as e:
+          print(e)
           print("[Error] - Failed to POST ImagingStudy")
     
       # Send DICOM
       if imagingStudyPosted:
         try:
-          dicom_push(assocId, study_iuid)
+          dicom_push(assocId, study_iuid, imagingStudyID)
           print("[Info] - DICOM sent successfully")
-        except:
+        except Exception as e:
+          print(e)
           print("[Error] - Failed to send DICOM")
     
     # Check and delete if all clear

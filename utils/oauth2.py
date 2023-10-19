@@ -18,7 +18,8 @@ def get_token():
   try:
     res = requests.post(url=url+"/oauth2/v1/accesstoken?grant_type=client_credentials", data=payload, headers=headers)
     data = res.json()
-  except:
+  except Exception as e: # work on python 3.x
+    print(e)
     print("[Error] - Authentication failed")
     return ""
   return data["access_token"]
