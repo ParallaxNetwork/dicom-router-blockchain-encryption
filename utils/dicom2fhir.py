@@ -3,6 +3,7 @@ from fhir import resources as fr
 from pydicom import dcmread
 from pydicom import dataset
 from pydicom import config
+from datetime import datetime
 from . import fhirutils
 
 config.convert_wrong_length_to_UN = True
@@ -43,7 +44,8 @@ def addInstance(study: fr.imagingstudy.ImagingStudy, series: fr.imagingstudy.Ima
   selectedInstance.uid = instanceUID
   selectedInstance.sopClass = fhirutils.gen_instance_sopclass(ds.SOPClassUID)
   selectedInstance.number = ds.InstanceNumber
-
+  
+  # modified - handle if image type & ConceptNameCodeSequence not found
   try:
     if series.modality.code == "SR":
       seq = ds.ConceptNameCodeSequence
@@ -51,7 +53,12 @@ def addInstance(study: fr.imagingstudy.ImagingStudy, series: fr.imagingstudy.Ima
     else:
       selectedInstance.title = '\\'.join(ds.ImageType)
   except:
-    print("Unable to set instance title")
+    try:
+      selectedInstance.title = '\\'.join(ds.ImageType)
+    except:
+      image_types = ['ORIGINAL', 'PRIMARY']
+      selectedInstance.title = '\\'.join(image_types)
+    print("Unable to set instance title - Set Default using Image Type: ", selectedInstance.title)
 
   series.instance.append(selectedInstance)
   study.numberOfInstances = study.numberOfInstances + 1
@@ -86,6 +93,7 @@ def addSeries(study: fr.imagingstudy.ImagingStudy, ds: dataset.FileDataset, fp):
   try:
     series.description = ds.SeriesDescription
   except:
+    series.description = "No Description"
     print("[Warn] - Series Description not found")
 
   series.number = ds.SeriesNumber
@@ -94,17 +102,23 @@ def addSeries(study: fr.imagingstudy.ImagingStudy, ds: dataset.FileDataset, fp):
   series.modality = fhirutils.gen_modality_coding(ds.Modality)
   fhirutils.update_study_modality_list(study, series.modality)
 
+  now = datetime.now()
   stime = None
+  # modified - if series time not found then set by current time
   try:
     stime = ds.SeriesTime
   except:
-    print("[Warn] - Series TimeDate is missing")
+    stime = now.strftime("%H%M%S")
+    print("[Warn] - Series TimeDate is missing - Set to Current Time : ", stime)
 
+  print("Series Date" + ds.SeriesDate)
+  # modified - if series date not found then set by current date
   try:
     sdate = ds.SeriesDate
     series.started = fhirutils.gen_started_datetime(sdate, stime)
   except:
-    print("[Warn] - Series Date is missing")
+    sdate = now.strftime("%Y%m%d")
+    print("[Warn] - Series Date is missing - Set to Current Date : ", sdate)
 
   """
   try:
@@ -148,6 +162,7 @@ def createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID) -> f
   try:
     study.description = ds.StudyDescription
   except:
+    study.description = "No Description"
     print("Study Description is missing")
 
   # TODO: ds.IssuerOfAccessionNumberSequence unable to obtain the object and identify correct logic for issuer (SQ)
@@ -187,12 +202,15 @@ def createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID) -> f
   except:
     print("Study Time is missing")
 
+  now = datetime.now()
+  # modified - if study date not found then use current date
   try:
     studyDate = ds.StudyDate
     study.started = fhirutils.gen_started_datetime(studyDate, studyTime)
   except Exception as e:
+    studyDate = now.strftime("%Y%m%d")
     print(e)
-    print("Study Date is missing")
+    print("Study Date is missing - Set to Current Date : ", studyDate)
 
   # TODO: we can add "inline" referrer
   # TODO: we can add "inline" reading radiologist.. (interpreter)
