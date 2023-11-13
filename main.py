@@ -26,6 +26,7 @@ fhir_pathsuffix = config.get('satusehat', 'fhir_pathsuffix')
 self_ae_title = config.get('satusehat', 'ae_title')
 dicom_port = config.get('satusehat', 'dicom_port')
 dcm_dir = config.get('satusehat', 'dcm_dir')
+mroc_client_url = config.get('satusehat', 'mroc_client_url')
 
 token = str()
 
@@ -212,8 +213,21 @@ def handle_assoc_released(event):
         print("[Info] - Obtaining Patient ID and ServiceRequest ID")
         serviceRequestID, patientID = get_service_request(accession_no)
         print("[Info] - Patient ID and ServiceRequest ID obtained")
-      except:
+      except Exception as e:
+        print(e)
         print("[Error] - Failed to obtain Patient ID and ServiceRequest ID")
+
+
+      # POST files to mroc client backend
+      try:
+        print("[Info] - Start POST-ing files to mroc client backend")
+        response = post_files_to_mroc_client(patientID, organization_id, study_dir, accession_no)
+        print("[Info] - Response: "+str(response))
+      except Exception as e:
+        print(e)
+        print("[Error] - Failed to POST to mroc client backend")
+
+      print("[Info] - Go on guys")
 
       # Create ImagingStudy
       imagingStudyCreated = False
@@ -282,6 +296,39 @@ def handle_assoc_released(event):
 
   # Return a 'Success' status
   return 0x0000
+
+def post_files_to_mroc_client(patient_id, organization_id, study_dir, accession_number):
+    url = mroc_client_url
+
+    # Prepare form data
+    data = {
+        'patientId': patient_id,
+        # 'patientId': 'patient_id',
+        'organizationId': organization_id,
+        'accessionNumber': accession_number
+    }
+
+    # Prepare files
+    files = []
+    for root, dirs, filenames in os.walk(study_dir):
+        for filename in filenames:
+            file_path = os.path.join(root, filename)
+            files.append(('files', (filename, open(file_path, 'rb'), 'application/dicom')))
+
+    print("[Info] - POST-ing files to mroc client backend")
+    print("[Info] - URL: "+url)
+    print("[Info] - Data: "+str(data))
+    print("[Info] - Files: "+str(files))
+
+    try:
+        response = requests.post(url=url+"/files", data=data, files=files)
+        # response.raise_for_status()  
+        print("[Info] - Files POST-ed successfully")
+        return response
+    except requests.exceptions.RequestException as e:
+        print("[Error] - Failed to POST files:", e)
+        raise e
+
 
 
 # ====================================================
