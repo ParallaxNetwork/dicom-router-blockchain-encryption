@@ -227,8 +227,6 @@ def handle_assoc_released(event):
         print(e)
         print("[Error] - Failed to POST to mroc client backend")
 
-      print("[Info] - Go on guys")
-
       # Create ImagingStudy
       imagingStudyCreated = False
       if serviceRequestID!=None and patientID!=None:
@@ -303,7 +301,6 @@ def post_files_to_mroc_client(patient_id, organization_id, study_dir, accession_
     # Prepare form data
     data = {
         'patientId': patient_id,
-        # 'patientId': 'patient_id',
         'organizationId': organization_id,
         'accessionNumber': accession_number
     }
