@@ -1,3 +1,4 @@
+import logging
 import os
 from fhir import resources as fr
 from pydicom import dcmread
@@ -7,6 +8,8 @@ from datetime import datetime
 from . import fhirutils
 
 config.convert_wrong_length_to_UN = True
+
+LOGGER = logging.getLogger('pynetdicom')
 
 def dcm_coded_concept(CodeSequence):
   concepts = []
@@ -109,16 +112,16 @@ def addSeries(study: fr.imagingstudy.ImagingStudy, ds: dataset.FileDataset, fp):
     stime = ds.SeriesTime
   except:
     stime = now.strftime("%H%M%S")
-    print("[Warn] - Series TimeDate is missing - Set to Current Time : ", stime)
+    LOGGER.warn("Series TimeDate is missing - Set to Current Time : ", stime)
 
-  print("Series Date" + ds.SeriesDate)
+  LOGGER.info("Series Date: " + ds.SeriesDate)
   # modified - if series date not found then set by current date
   try:
     sdate = ds.SeriesDate
     series.started = fhirutils.gen_started_datetime(sdate, stime)
   except:
     sdate = now.strftime("%Y%m%d")
-    print("[Warn] - Series Date is missing - Set to Current Date : ", sdate)
+    LOGGER.warn("Series Date is missing - Set to Current Date : ", sdate)
 
   """
   try:
@@ -163,7 +166,7 @@ def createImagingStudy(ds, fp, imagingStudyID, serviceRequestID, patientID) -> f
     study.description = ds.StudyDescription
   except:
     study.description = "No Description"
-    print("Study Description is missing")
+    LOGGER.error("Study Description is missing")
 
   # TODO: ds.IssuerOfAccessionNumberSequence unable to obtain the object and identify correct logic for issuer (SQ)
   study.identifier = []

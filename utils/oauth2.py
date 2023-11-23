@@ -1,26 +1,22 @@
-import http.client
-import json
-import configparser
+import logging
 import requests
+from utils import config
 
-config = configparser.ConfigParser()
-config.read('router.conf')
-client_key = config.get('satusehat', 'client_key')
-secret_key = config.get('satusehat', 'secret_key')
-url = config.get('satusehat', 'url')
-
+LOGGER = logging.getLogger('pynetdicom')
 
 def get_token():
-  payload = 'client_id='+client_key+'&client_secret='+secret_key
+  global token
+  payload = 'client_id='+config.client_key+'&client_secret='+config.secret_key
   headers = {
     'Content-Type': 'application/x-www-form-urlencoded'
   }
   try:
-    res = requests.post(url=url+"/oauth2/v1/accesstoken?grant_type=client_credentials", data=payload, headers=headers)
+    res = requests.post(url=config.url+"/oauth2/v1/accesstoken?grant_type=client_credentials", data=payload, headers=headers)
     data = res.json()
   except Exception as e: # work on python 3.x
-    print(e)
-    print("[Error] - Authentication failed")
+    LOGGER.exception(e)
+    LOGGER.error("Authentication failed")
     return ""
+  token = data["access_token"]
   return data["access_token"]
 
